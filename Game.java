@@ -1,4 +1,5 @@
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -6,8 +7,10 @@ import javax.swing.JScrollBar;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -26,8 +29,11 @@ public class Game extends JFrame implements ActionListener{
 
     private JPanel panelOptions;
     private JButton btOptionsBackToMenu;
+    private JButton btOptionsSaveLocationBrowse;
     private JTextField tfOptionsDefaultAddress;
+    private JTextField tfOptionsSaveLocation;
     private JLabel lbOptionsDefaultAddress;
+    private JLabel lbOptionsSaveLocation;
 
     private JPanel panelStart;
     private JButton btStartHostGame;
@@ -50,8 +56,10 @@ public class Game extends JFrame implements ActionListener{
     private JPanel panelHost;
     private JButton btHostBackToMenu;
 
-    private JPanel panelCreateGame;
-    private JButton btCreateGameBackToMenu;
+    private JPanel panelGameBoardEditor;
+    private JButton btGameBoardEditorBackToMenu;
+    private JButton btGameBoardEditorCreateNewGameBoard;
+    private JButton btGameBoardEditorLoadGameBoard;
 
 
     public enum Panels {
@@ -84,6 +92,16 @@ public class Game extends JFrame implements ActionListener{
         if(gameOptions == null) {
             gameOptions = new HashMap<String, String>();
             gameOptions.put("defaultAddress", "localhost");
+            gameOptions.put("saveLocation", "%UserProfile%");
+        } else {
+            if(gameOptions.get("defaultAddress").equals("")) {
+                gameOptions.put("defaultAddress", "localhost");
+                System.out.println("defaultAddress is null");
+            }
+            if(gameOptions.get("saveLocation").equals("")) {
+                gameOptions.put("saveLocation", "C:\\Users\\Public\\Documents\\JeopardyGame\\");
+                System.out.println("saveLocation is null");
+            }
         }
         
 
@@ -113,14 +131,26 @@ public class Game extends JFrame implements ActionListener{
         btOptionsBackToMenu.setBounds(10, 10, 100, 50);
         btOptionsBackToMenu.addActionListener(this);
         panelOptions.add(btOptionsBackToMenu);
+        btOptionsSaveLocationBrowse = new JButton("Browse");
+        btOptionsSaveLocationBrowse.setBounds(400, 165, 50, 20);
+        btOptionsSaveLocationBrowse.addActionListener(this);
+        btOptionsSaveLocationBrowse.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        btOptionsSaveLocationBrowse.setFont(new Font("Arial", Font.PLAIN, 12));
+        panelOptions.add(btOptionsSaveLocationBrowse);
         
         tfOptionsDefaultAddress = new JTextField(gameOptions.get("defaultAddress"));
         tfOptionsDefaultAddress.setBounds(200, 100, 100, 50);
         panelOptions.add(tfOptionsDefaultAddress);
+        tfOptionsSaveLocation = new JTextField(gameOptions.get("saveLocation"));
+        tfOptionsSaveLocation.setBounds(200, 150, 200, 50);
+        panelOptions.add(tfOptionsSaveLocation);
         
         lbOptionsDefaultAddress = new JLabel("Default Address:");
         lbOptionsDefaultAddress.setBounds(100, 100, 100, 50);
         panelOptions.add(lbOptionsDefaultAddress);
+        lbOptionsSaveLocation = new JLabel("Save Location:");
+        lbOptionsSaveLocation.setBounds(100, 150, 100, 50);
+        panelOptions.add(lbOptionsSaveLocation);
 
 
 
@@ -137,7 +167,7 @@ public class Game extends JFrame implements ActionListener{
         btStartConnectServer.setBounds(175, 200, 150, 50);
         btStartConnectServer.addActionListener(this);
         panelStart.add(btStartConnectServer);
-        btStartCreateGame = new JButton("Create Game");
+        btStartCreateGame = new JButton("Game Board Editor");
         btStartCreateGame.setBounds(175, 300, 150, 50);
         btStartCreateGame.addActionListener(this);
         panelStart.add(btStartCreateGame);
@@ -162,15 +192,23 @@ public class Game extends JFrame implements ActionListener{
 
 
 
-        // Create Game
-        panelCreateGame = new JPanel();
-        panelCreateGame.setBounds(0, 0, 500, 500);
-        panelCreateGame.setLayout(null);
+        // Game Board Editor
+        panelGameBoardEditor = new JPanel();
+        panelGameBoardEditor.setBounds(0, 0, 500, 500);
+        panelGameBoardEditor.setLayout(null);
         
-        btCreateGameBackToMenu = new JButton("Back");
-        btCreateGameBackToMenu.setBounds(10, 10, 100, 50);
-        btCreateGameBackToMenu.addActionListener(this);
-        panelCreateGame.add(btCreateGameBackToMenu);
+        btGameBoardEditorBackToMenu = new JButton("Back");
+        btGameBoardEditorBackToMenu.setBounds(10, 10, 100, 50);
+        btGameBoardEditorBackToMenu.addActionListener(this);
+        panelGameBoardEditor.add(btGameBoardEditorBackToMenu);
+        btGameBoardEditorCreateNewGameBoard = new JButton("Create New Game Board");
+        btGameBoardEditorCreateNewGameBoard.setBounds(150, 200, 200, 50);
+        btGameBoardEditorCreateNewGameBoard.addActionListener(this);
+        panelGameBoardEditor.add(btGameBoardEditorCreateNewGameBoard);
+        btGameBoardEditorLoadGameBoard = new JButton("Load Game Board");
+        btGameBoardEditorLoadGameBoard.setBounds(150, 250, 200, 50);
+        btGameBoardEditorLoadGameBoard.addActionListener(this);
+        panelGameBoardEditor.add(btGameBoardEditorLoadGameBoard);
 
 
 
@@ -225,14 +263,27 @@ public class Game extends JFrame implements ActionListener{
             tfOptionsDefaultAddress.setText(gameOptions.get("defaultAddress"));
             setPanel(Panels.OptionsMenu, Panels.MainMenu);
         } else if(src == btMenuExitGame) {
-            FileHandler.saveGameOptions(gameOptions);
             exitGame();
         }
 
         // Options
         else if(src == btOptionsBackToMenu) {
             gameOptions.put("defaultAddress", tfOptionsDefaultAddress.getText());
+            gameOptions.put("saveLocation", tfOptionsSaveLocation.getText());
+            FileHandler.saveGameOptions(gameOptions);
             setPanel(Panels.MainMenu, Panels.OptionsMenu);
+        } else if(src == btOptionsSaveLocationBrowse) {
+            JFileChooser chooser = new JFileChooser(gameOptions.get("saveLocation"));
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            int status = chooser.showOpenDialog(null);
+            if (status == JFileChooser.APPROVE_OPTION) {
+                File file = chooser.getSelectedFile();
+                if (file == null) {
+                    return;
+                }
+                String fileName = chooser.getSelectedFile().getAbsolutePath();
+                tfOptionsSaveLocation.setText(fileName);
+            }
         }
         
         // Starting Screen
@@ -248,9 +299,13 @@ public class Game extends JFrame implements ActionListener{
             setPanel(Panels.MainMenu, Panels.StartingScreen);
         } 
         
-        // Create Game
-        else if(src == btCreateGameBackToMenu) {
+        // Game Board Editor
+        else if(src == btGameBoardEditorBackToMenu) {
             setPanel(Panels.StartingScreen, Panels.CreateGame);
+        } else if(src == btGameBoardEditorCreateNewGameBoard) {
+
+        } else if(src == btGameBoardEditorLoadGameBoard) {
+
         }
 
         // Actual Game
@@ -368,7 +423,7 @@ public class Game extends JFrame implements ActionListener{
             remove(panelHost);
             break;
             case CreateGame:
-            remove(panelCreateGame);
+            remove(panelGameBoardEditor);
             break;
         }
         switch(panel) {
@@ -388,7 +443,7 @@ public class Game extends JFrame implements ActionListener{
             add(panelHost);
             break;
             case CreateGame:
-            add(panelCreateGame);
+            add(panelGameBoardEditor);
             break;
         }
         repaint();

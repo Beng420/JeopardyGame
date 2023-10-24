@@ -1,5 +1,3 @@
-// A basic game where you can move a ball with the arrow keys
-
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -10,7 +8,6 @@ import javax.swing.JTextField;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -35,6 +32,7 @@ public class Game extends JFrame implements ActionListener{
     private JPanel panelStart;
     private JButton btStartHostGame;
     private JButton btStartConnectServer;
+    private JButton btStartCreateGame;
     private JButton btStartBackToMenu;
     private JTextField tfStartUsername;
     private JTextField tfStartIpAddress;
@@ -49,11 +47,20 @@ public class Game extends JFrame implements ActionListener{
     private JScrollBar sbGameChat;
     private String FILLERSTRING = "Type a message...";
 
+    private JPanel panelHost;
+    private JButton btHostBackToMenu;
+
+    private JPanel panelCreateGame;
+    private JButton btCreateGameBackToMenu;
+
+
     public enum Panels {
         MainMenu,
         StartingScreen,
         ActualGame,
-        OptionsMenu
+        OptionsMenu,
+        HostScreen,
+        CreateGame
     }
     
     public Game() {
@@ -80,6 +87,7 @@ public class Game extends JFrame implements ActionListener{
         }
         
 
+
         // Main Menu
         btMenuStartGame = new JButton("Start Game");
         btMenuStartGame.setBounds(200, 200, 100, 50);
@@ -94,25 +102,33 @@ public class Game extends JFrame implements ActionListener{
         btMenuExitGame.addActionListener(this);
         panelMenu.add(btMenuExitGame);
 
+
+
         // Options
         panelOptions = new JPanel();
         panelOptions.setBounds(0, 0, 500, 500);
         panelOptions.setLayout(null);
+        
         btOptionsBackToMenu = new JButton("Back");
         btOptionsBackToMenu.setBounds(10, 10, 100, 50);
         btOptionsBackToMenu.addActionListener(this);
         panelOptions.add(btOptionsBackToMenu);
+        
         tfOptionsDefaultAddress = new JTextField(gameOptions.get("defaultAddress"));
         tfOptionsDefaultAddress.setBounds(200, 100, 100, 50);
         panelOptions.add(tfOptionsDefaultAddress);
+        
         lbOptionsDefaultAddress = new JLabel("Default Address:");
         lbOptionsDefaultAddress.setBounds(100, 100, 100, 50);
         panelOptions.add(lbOptionsDefaultAddress);
+
+
 
         // Starting Screen
         panelStart = new JPanel();
         panelStart.setBounds(0, 0, 500, 500);
         panelStart.setLayout(null);
+        
         btStartHostGame = new JButton("Host Game");
         btStartHostGame.setBounds(175, 250, 150, 50);
         btStartHostGame.addActionListener(this);
@@ -121,16 +137,22 @@ public class Game extends JFrame implements ActionListener{
         btStartConnectServer.setBounds(175, 200, 150, 50);
         btStartConnectServer.addActionListener(this);
         panelStart.add(btStartConnectServer);
+        btStartCreateGame = new JButton("Create Game");
+        btStartCreateGame.setBounds(175, 300, 150, 50);
+        btStartCreateGame.addActionListener(this);
+        panelStart.add(btStartCreateGame);
         btStartBackToMenu = new JButton("Back");
         btStartBackToMenu.setBounds(200, 400, 100, 50);
         btStartBackToMenu.addActionListener(this);
         panelStart.add(btStartBackToMenu);
+        
         tfStartUsername = new JTextField();
         tfStartUsername.setBounds(200, 100, 100, 50);
         panelStart.add(tfStartUsername);
         tfStartIpAddress = new JTextField();
         tfStartIpAddress.setBounds(200, 150, 100, 50);
         panelStart.add(tfStartIpAddress);
+        
         lbStartUsername = new JLabel("Username:");
         lbStartUsername.setBounds(100, 100, 100, 50);
         panelStart.add(lbStartUsername);
@@ -138,10 +160,25 @@ public class Game extends JFrame implements ActionListener{
         lbStartIpAddress.setBounds(100, 150, 100, 50);
         panelStart.add(lbStartIpAddress);
 
+
+
+        // Create Game
+        panelCreateGame = new JPanel();
+        panelCreateGame.setBounds(0, 0, 500, 500);
+        panelCreateGame.setLayout(null);
+        
+        btCreateGameBackToMenu = new JButton("Back");
+        btCreateGameBackToMenu.setBounds(10, 10, 100, 50);
+        btCreateGameBackToMenu.addActionListener(this);
+        panelCreateGame.add(btCreateGameBackToMenu);
+
+
+
         // Actual Game
         panelGame = new JPanel();
         panelGame.setBounds(0, 0, 500, 500);
         panelGame.setLayout(null);
+        
         btGameLeave = new JButton("Leave");
         btGameLeave.setBounds(200, 400, 100, 50);
         btGameLeave.addActionListener(this);
@@ -150,22 +187,38 @@ public class Game extends JFrame implements ActionListener{
         btGameSendMessage.setBounds(200, 350, 100, 50);
         btGameSendMessage.addActionListener(this);
         panelGame.add(btGameSendMessage);
+        
         tfGameMessageToSend = new JTextField();
         tfGameMessageToSend.setBounds(100, 350, 100, 50);
         tfGameMessageToSend.addActionListener(this);
         panelGame.add(tfGameMessageToSend);
+        
         taGameChat = new JTextArea();
         taGameChat.setBounds(100, 100, 300, 200);
         panelGame.add(taGameChat);
+        
         sbGameChat = new JScrollBar();
         sbGameChat.setBounds(400, 100, 50, 200);
         panelGame.add(sbGameChat);
+
+
+
+        // Host's Screen
+        panelHost = new JPanel();
+        panelHost.setBounds(0, 0, 500, 500);
+        panelHost.setLayout(null);
+        
+        btHostBackToMenu = new JButton("Back");
+        btHostBackToMenu.setBounds(10, 10, 100, 50);
+        btHostBackToMenu.addActionListener(this);
+        panelHost.add(btHostBackToMenu);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
 
+        // Main Menu
         if(src == btMenuStartGame) {
             setPanel(Panels.StartingScreen, Panels.MainMenu);
         } else if(src == btMenuOptions) {
@@ -176,12 +229,16 @@ public class Game extends JFrame implements ActionListener{
             exitGame();
         }
 
+        // Options
         else if(src == btOptionsBackToMenu) {
             gameOptions.put("defaultAddress", tfOptionsDefaultAddress.getText());
             setPanel(Panels.MainMenu, Panels.OptionsMenu);
         }
         
-        else if(src == btStartHostGame) {
+        // Starting Screen
+        else if(src == btStartCreateGame) {
+            setPanel(Panels.CreateGame, Panels.StartingScreen);
+        } else if(src == btStartHostGame) {
             openServer();
         } else if(src == btStartConnectServer) {
             connectToServer(false);
@@ -191,10 +248,21 @@ public class Game extends JFrame implements ActionListener{
             setPanel(Panels.MainMenu, Panels.StartingScreen);
         } 
         
+        // Create Game
+        else if(src == btCreateGameBackToMenu) {
+            setPanel(Panels.StartingScreen, Panels.CreateGame);
+        }
+
+        // Actual Game
         else if(src == btGameLeave) {
             leaveGame();
         } else if(src == btGameSendMessage) {
             sendMessage();
+        }
+
+        // Host's Screen
+        else if(src == btHostBackToMenu) {
+            setPanel(Panels.MainMenu, Panels.HostScreen);
         }
     }
 
@@ -220,7 +288,7 @@ public class Game extends JFrame implements ActionListener{
             e.printStackTrace();
         }
         
-        connectToServer(true);
+        setPanel(Panels.HostScreen, Panels.StartingScreen);
     }
 
     private void connectToServer(boolean localhosting) {
@@ -296,6 +364,12 @@ public class Game extends JFrame implements ActionListener{
             case OptionsMenu:
             remove(panelOptions);
             break;
+            case HostScreen:
+            remove(panelHost);
+            break;
+            case CreateGame:
+            remove(panelCreateGame);
+            break;
         }
         switch(panel) {
             case MainMenu:
@@ -309,6 +383,12 @@ public class Game extends JFrame implements ActionListener{
             break;
             case OptionsMenu:
             add(panelOptions);
+            break;
+            case HostScreen:
+            add(panelHost);
+            break;
+            case CreateGame:
+            add(panelCreateGame);
             break;
         }
         repaint();

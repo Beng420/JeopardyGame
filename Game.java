@@ -2,6 +2,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextArea;
@@ -253,8 +254,8 @@ public class Game extends JFrame implements ActionListener{
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-        Object src = e.getSource();
+    public void actionPerformed(ActionEvent evnt) {
+        Object src = evnt.getSource();
 
         // Main Menu
         if(src == btMenuStartGame) {
@@ -303,7 +304,16 @@ public class Game extends JFrame implements ActionListener{
         else if(src == btGameBoardEditorBackToMenu) {
             setPanel(Panels.StartingScreen, Panels.CreateGame);
         } else if(src == btGameBoardEditorCreateNewGameBoard) {
+            String boardName;
+            try {
+                boardName = JOptionPane.showInputDialog(this, "Enter the name of the game board", "Create New Game Board", JOptionPane.PLAIN_MESSAGE);
+                if(boardName == null) {
+                    return;
+                }
 
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else if(src == btGameBoardEditorLoadGameBoard) {
 
         }

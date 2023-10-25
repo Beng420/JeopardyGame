@@ -69,21 +69,22 @@ public class FileHandler {
                 return;
             PrintWriter writer = new PrintWriter(f);
             writer.println(data);
+            writer.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static String loadGameBoard(String boardName) {
+    public static String loadGameBoard(String boardName, String savePath) {
         try {
-            File f = new File(boardName);
+            File f = new File(savePath+"\\"+boardName+".txt");
             if(!f.exists())
                 return null;
             java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(f));
             String data = "";
             String line = "";
             while ((line = reader.readLine()) != null) {
-                data += line;
+                data += line+"\n";
             }
             reader.close();
             return data;

@@ -7,6 +7,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -22,6 +23,17 @@ public class Game extends JFrame implements ActionListener{
     private Server server;
     private Client client;
     private HashMap<String, String> gameOptions;
+
+    private final int WIDTH = 1244;
+    private final int HEIGHT = 700;
+    private final int STD_WIDTH = 100;
+    private final int STD_WIDTH_HALF = 50;
+    private final int STD_WIDTH_DOUBLE = 200;
+    private final int STD_WIDTH_POINT_FIVE = 150;
+    private final int STD_HEIGHT = 50;
+    private final int STD_HEIGHT_HALF = 25;
+    private final int STD_HEIGHT_DOUBLE = 100;
+    private final int STD_HEIGHT_POINT_FIVE = 75;
 
     private JPanel panelMenu;
     private JButton btMenuStartGame;
@@ -61,6 +73,20 @@ public class Game extends JFrame implements ActionListener{
     private JButton btGameBoardEditorBackToMenu;
     private JButton btGameBoardEditorCreateNewGameBoard;
     private JButton btGameBoardEditorLoadGameBoard;
+    private GameBoard gameBoard;
+
+    private JPanel panelEditingBoard;
+    private JButton btEditingBoardBackToMenu;
+    private JButton btEditingBoardSaveGameBoard;
+    private JButton[][] btEditingBoardQuestions;
+    private JTextField[] tfEditingBoardCategories;
+
+    private JPanel panelEditingQuestion;
+    private JTextField tfEditingQuestionQuestion;
+    private JTextField tfEditingQuestionAnswer;
+    private JTextField tfEditingQuestionValue;
+    private JButton btEditingQuestionBackToBoard;
+    private JLabel lbEditingQuestionQuestion;
 
 
     public enum Panels {
@@ -69,12 +95,14 @@ public class Game extends JFrame implements ActionListener{
         ActualGame,
         OptionsMenu,
         HostScreen,
-        CreateGame
+        CreateGame,
+        EditGame,
+        EditQuestion
     }
     
     public Game() {
         super("Game");
-        setSize(500, 500);
+        setSize(WIDTH, HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
         setLayout(null);
@@ -85,7 +113,7 @@ public class Game extends JFrame implements ActionListener{
 
     private void initComponents() {
         panelMenu = new JPanel();
-        panelMenu.setBounds(0, 0, 500, 500);
+        panelMenu.setBounds(0, 0, WIDTH, HEIGHT);
         panelMenu.setLayout(null);
         add(panelMenu);
 
@@ -109,15 +137,15 @@ public class Game extends JFrame implements ActionListener{
 
         // Main Menu
         btMenuStartGame = new JButton("Start Game");
-        btMenuStartGame.setBounds(200, 200, 100, 50);
+        btMenuStartGame.setBounds(200, 200, STD_WIDTH, STD_HEIGHT);
         btMenuStartGame.addActionListener(this);
         panelMenu.add(btMenuStartGame);
         btMenuOptions = new JButton("Options");
-        btMenuOptions.setBounds(200, 250, 100, 50);
+        btMenuOptions.setBounds(200, 250, STD_WIDTH, STD_HEIGHT);
         btMenuOptions.addActionListener(this);
         panelMenu.add(btMenuOptions);
         btMenuExitGame = new JButton("Exit Game");
-        btMenuExitGame.setBounds(200, 300, 100, 50);
+        btMenuExitGame.setBounds(200, 300, STD_WIDTH, STD_HEIGHT);
         btMenuExitGame.addActionListener(this);
         panelMenu.add(btMenuExitGame);
 
@@ -125,11 +153,12 @@ public class Game extends JFrame implements ActionListener{
 
         // Options
         panelOptions = new JPanel();
-        panelOptions.setBounds(0, 0, 500, 500);
+        panelOptions.setBounds(0, 0, WIDTH, HEIGHT);
         panelOptions.setLayout(null);
         
         btOptionsBackToMenu = new JButton("Back");
-        btOptionsBackToMenu.setBounds(10, 10, 100, 50);
+        btOptionsBackToMenu.setBounds(10, 10, 50, 25);
+        btOptionsBackToMenu.setMargin(new java.awt.Insets(0, 0, 0, 0));
         btOptionsBackToMenu.addActionListener(this);
         panelOptions.add(btOptionsBackToMenu);
         btOptionsSaveLocationBrowse = new JButton("Browse");
@@ -140,95 +169,155 @@ public class Game extends JFrame implements ActionListener{
         panelOptions.add(btOptionsSaveLocationBrowse);
         
         tfOptionsDefaultAddress = new JTextField(gameOptions.get("defaultAddress"));
-        tfOptionsDefaultAddress.setBounds(200, 100, 100, 50);
+        tfOptionsDefaultAddress.setBounds(200, 100, STD_WIDTH, STD_HEIGHT);
         panelOptions.add(tfOptionsDefaultAddress);
         tfOptionsSaveLocation = new JTextField(gameOptions.get("saveLocation"));
-        tfOptionsSaveLocation.setBounds(200, 150, 200, 50);
+        tfOptionsSaveLocation.setBounds(200, 150, STD_WIDTH*2, STD_HEIGHT);
         panelOptions.add(tfOptionsSaveLocation);
         
         lbOptionsDefaultAddress = new JLabel("Default Address:");
-        lbOptionsDefaultAddress.setBounds(100, 100, 100, 50);
+        lbOptionsDefaultAddress.setBounds(100, 100, STD_WIDTH, STD_HEIGHT);
         panelOptions.add(lbOptionsDefaultAddress);
         lbOptionsSaveLocation = new JLabel("Save Location:");
-        lbOptionsSaveLocation.setBounds(100, 150, 100, 50);
+        lbOptionsSaveLocation.setBounds(100, 150, STD_WIDTH, STD_HEIGHT);
         panelOptions.add(lbOptionsSaveLocation);
 
 
 
         // Starting Screen
         panelStart = new JPanel();
-        panelStart.setBounds(0, 0, 500, 500);
+        panelStart.setBounds(0, 0, WIDTH, HEIGHT);
         panelStart.setLayout(null);
         
         btStartHostGame = new JButton("Host Game");
-        btStartHostGame.setBounds(175, 250, 150, 50);
+        btStartHostGame.setBounds(175, 250, (int)(STD_WIDTH*1.5), STD_HEIGHT);
         btStartHostGame.addActionListener(this);
         panelStart.add(btStartHostGame);
         btStartConnectServer = new JButton("Connect to Server");
-        btStartConnectServer.setBounds(175, 200, 150, 50);
+        btStartConnectServer.setBounds(175, 200, (int)(STD_WIDTH*1.5), STD_HEIGHT);
         btStartConnectServer.addActionListener(this);
         panelStart.add(btStartConnectServer);
         btStartCreateGame = new JButton("Game Board Editor");
-        btStartCreateGame.setBounds(175, 300, 150, 50);
+        btStartCreateGame.setBounds(175, 300, (int)(STD_WIDTH*1.5), STD_HEIGHT);
         btStartCreateGame.addActionListener(this);
         panelStart.add(btStartCreateGame);
         btStartBackToMenu = new JButton("Back");
-        btStartBackToMenu.setBounds(200, 400, 100, 50);
+        btStartBackToMenu.setBounds(10, 10, 50, 25);
+        btStartBackToMenu.setMargin(new java.awt.Insets(0, 0, 0, 0));
         btStartBackToMenu.addActionListener(this);
         panelStart.add(btStartBackToMenu);
         
         tfStartUsername = new JTextField();
-        tfStartUsername.setBounds(200, 100, 100, 50);
+        tfStartUsername.setBounds(200, 100, STD_WIDTH, STD_HEIGHT);
         panelStart.add(tfStartUsername);
         tfStartIpAddress = new JTextField();
-        tfStartIpAddress.setBounds(200, 150, 100, 50);
+        tfStartIpAddress.setBounds(200, 150, STD_WIDTH, STD_HEIGHT);
         panelStart.add(tfStartIpAddress);
         
         lbStartUsername = new JLabel("Username:");
-        lbStartUsername.setBounds(100, 100, 100, 50);
+        lbStartUsername.setBounds(100, 100, STD_WIDTH, STD_HEIGHT);
         panelStart.add(lbStartUsername);
         lbStartIpAddress = new JLabel("IP Address:");
-        lbStartIpAddress.setBounds(100, 150, 100, 50);
+        lbStartIpAddress.setBounds(100, 150, STD_WIDTH, STD_HEIGHT);
         panelStart.add(lbStartIpAddress);
 
 
 
         // Game Board Editor
         panelGameBoardEditor = new JPanel();
-        panelGameBoardEditor.setBounds(0, 0, 500, 500);
+        panelGameBoardEditor.setBounds(0, 0, WIDTH, HEIGHT);
         panelGameBoardEditor.setLayout(null);
         
         btGameBoardEditorBackToMenu = new JButton("Back");
-        btGameBoardEditorBackToMenu.setBounds(10, 10, 100, 50);
+        btGameBoardEditorBackToMenu.setBounds(10, 10, STD_WIDTH_HALF, STD_HEIGHT_HALF);
         btGameBoardEditorBackToMenu.addActionListener(this);
+        btGameBoardEditorBackToMenu.setMargin(new java.awt.Insets(0, 0, 0, 0));
         panelGameBoardEditor.add(btGameBoardEditorBackToMenu);
         btGameBoardEditorCreateNewGameBoard = new JButton("Create New Game Board");
-        btGameBoardEditorCreateNewGameBoard.setBounds(150, 200, 200, 50);
+        btGameBoardEditorCreateNewGameBoard.setBounds(150, 200, STD_WIDTH_DOUBLE, STD_HEIGHT);
         btGameBoardEditorCreateNewGameBoard.addActionListener(this);
         panelGameBoardEditor.add(btGameBoardEditorCreateNewGameBoard);
         btGameBoardEditorLoadGameBoard = new JButton("Load Game Board");
-        btGameBoardEditorLoadGameBoard.setBounds(150, 250, 200, 50);
+        btGameBoardEditorLoadGameBoard.setBounds(150, 250, STD_WIDTH_DOUBLE, STD_HEIGHT);
         btGameBoardEditorLoadGameBoard.addActionListener(this);
         panelGameBoardEditor.add(btGameBoardEditorLoadGameBoard);
 
 
 
+        // Editing Screen
+        panelEditingBoard = new JPanel();
+        panelEditingBoard.setBounds(0, 0, WIDTH, HEIGHT);
+        panelEditingBoard.setLayout(null);
+
+        btEditingBoardBackToMenu = new JButton("Back");
+        btEditingBoardBackToMenu.setBounds(10, 10, STD_WIDTH_HALF, STD_HEIGHT_HALF);
+        btEditingBoardBackToMenu.addActionListener(this);
+        btEditingBoardBackToMenu.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        panelEditingBoard.add(btEditingBoardBackToMenu);
+        btEditingBoardSaveGameBoard = new JButton("Save");
+        btEditingBoardSaveGameBoard.setBounds(10, 40, STD_WIDTH_HALF, STD_HEIGHT_HALF);
+        btEditingBoardSaveGameBoard.addActionListener(this);
+        btEditingBoardSaveGameBoard.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        panelEditingBoard.add(btEditingBoardSaveGameBoard);
+
+        btEditingBoardQuestions = new JButton[5][5];
+        for(int i = 0; i < 5; i++) {
+            for(int j = 0; j < 5; j ++) {
+                btEditingBoardQuestions[i][j] = new JButton();
+                btEditingBoardQuestions[i][j].setBounds(100 + (i * STD_WIDTH_POINT_FIVE), 100 + (j * STD_HEIGHT), STD_WIDTH_POINT_FIVE, STD_HEIGHT);
+                btEditingBoardQuestions[i][j].addActionListener(this);
+                panelEditingBoard.add(btEditingBoardQuestions[i][j]);
+            }
+        }
+
+        tfEditingBoardCategories = new JTextField[5];
+        for(int i = 0; i < 5; i++) {
+            tfEditingBoardCategories[i] = new JTextField();
+            tfEditingBoardCategories[i].setBounds(100 + (i * STD_WIDTH_POINT_FIVE), 50, STD_WIDTH_POINT_FIVE, STD_HEIGHT);
+            panelEditingBoard.add(tfEditingBoardCategories[i]);
+        }
+
+
+
+        // Editing Question
+        panelEditingQuestion = new JPanel();
+        panelEditingQuestion.setBounds(0, 0, WIDTH, HEIGHT);
+        panelEditingQuestion.setLayout(null);
+
+        tfEditingQuestionQuestion = new JTextField();
+        tfEditingQuestionQuestion.setBounds(100, 100, STD_WIDTH*3, STD_HEIGHT);
+        panelEditingQuestion.add(tfEditingQuestionQuestion);
+        tfEditingQuestionAnswer = new JTextField();
+        tfEditingQuestionAnswer.setBounds(100, 150, STD_WIDTH*3, STD_HEIGHT);
+        panelEditingQuestion.add(tfEditingQuestionAnswer);
+        tfEditingQuestionValue = new JTextField();
+        tfEditingQuestionValue.setBounds(100, 200, STD_WIDTH*3, STD_HEIGHT);
+        panelEditingQuestion.add(tfEditingQuestionValue);
+
+        btEditingQuestionBackToBoard = new JButton("Back");
+        btEditingQuestionBackToBoard.setBounds(10, 10, STD_WIDTH_HALF, STD_HEIGHT_HALF);
+        btEditingQuestionBackToBoard.addActionListener(this);
+        btEditingQuestionBackToBoard.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        panelEditingQuestion.add(btEditingQuestionBackToBoard);
+
+
+
         // Actual Game
         panelGame = new JPanel();
-        panelGame.setBounds(0, 0, 500, 500);
+        panelGame.setBounds(0, 0, WIDTH, HEIGHT);
         panelGame.setLayout(null);
         
         btGameLeave = new JButton("Leave");
-        btGameLeave.setBounds(200, 400, 100, 50);
+        btGameLeave.setBounds(200, 400, STD_WIDTH, STD_HEIGHT);
         btGameLeave.addActionListener(this);
         panelGame.add(btGameLeave);
         btGameSendMessage = new JButton("Send");
-        btGameSendMessage.setBounds(200, 350, 100, 50);
+        btGameSendMessage.setBounds(200, 350, STD_WIDTH, STD_HEIGHT);
         btGameSendMessage.addActionListener(this);
         panelGame.add(btGameSendMessage);
         
         tfGameMessageToSend = new JTextField();
-        tfGameMessageToSend.setBounds(100, 350, 100, 50);
+        tfGameMessageToSend.setBounds(100, 350, STD_WIDTH, STD_HEIGHT);
         tfGameMessageToSend.addActionListener(this);
         panelGame.add(tfGameMessageToSend);
         
@@ -244,12 +333,13 @@ public class Game extends JFrame implements ActionListener{
 
         // Host's Screen
         panelHost = new JPanel();
-        panelHost.setBounds(0, 0, 500, 500);
+        panelHost.setBounds(0, 0, WIDTH, HEIGHT);
         panelHost.setLayout(null);
         
         btHostBackToMenu = new JButton("Back");
-        btHostBackToMenu.setBounds(10, 10, 100, 50);
+        btHostBackToMenu.setBounds(10, 10, STD_WIDTH_HALF, STD_HEIGHT_HALF);
         btHostBackToMenu.addActionListener(this);
+        btHostBackToMenu.setMargin(new java.awt.Insets(0, 0, 0, 0));
         panelHost.add(btHostBackToMenu);
     }
 
@@ -310,16 +400,61 @@ public class Game extends JFrame implements ActionListener{
                 if(boardName == null) {
                     return;
                 }
-
+                gameBoard = new GameBoard(boardName);
+                FileHandler.createGameBoard(boardName, gameOptions.get("saveLocation"));
+                FileHandler.saveGameBoard(boardName, gameOptions.get("saveLocation"), gameBoard.toString());
+                loadGameBoard(0);
+                setPanel(Panels.EditGame, Panels.CreateGame);
             } catch (Exception e) {
                 e.printStackTrace();
+                showErrorWindow("Error creating game board");
             }
         } else if(src == btGameBoardEditorLoadGameBoard) {
-
+            try {
+                JFileChooser chooser = new JFileChooser(gameOptions.get("saveLocation"));
+                chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                int status = chooser.showOpenDialog(null);
+                if (status == JFileChooser.APPROVE_OPTION) {
+                    File file = chooser.getSelectedFile();
+                    if (file == null) {
+                        return;
+                    }
+                    String fileName = chooser.getSelectedFile().getName();
+                    fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+                    gameBoard = GameBoard.fromString(FileHandler.loadGameBoard(fileName, gameOptions.get("saveLocation")));
+                    loadGameBoard(0);
+                    setPanel(Panels.EditGame, Panels.CreateGame);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                showErrorWindow("Error loading game board");
+            }
+        }
+        
+        // Editing Screen
+        else if(src == btEditingBoardBackToMenu) {
+            setPanel(Panels.CreateGame, Panels.EditGame);
+        } else if(src == btEditingBoardSaveGameBoard) {
+            try {
+                FileHandler.saveGameBoard(gameBoard.getBoardID(), gameOptions.get("saveLocation"), gameBoard.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+                showErrorWindow("Error saving game board");
+            }
+        } else if(src == btEditingQuestionBackToBoard) {
+            setPanel(Panels.EditGame, Panels.EditQuestion);
+        } else {
+            for(int i = 0; i < 5; i++) {
+                for(int j = 0; j < 5; j ++) {
+                    if(src == btEditingBoardQuestions[i][j]) {
+                        setPanel(Panels.EditQuestion, Panels.EditGame);
+                    }
+                }
+            }
         }
 
         // Actual Game
-        else if(src == btGameLeave) {
+        if(src == btGameLeave) {
             leaveGame();
         } else if(src == btGameSendMessage) {
             sendMessage();
@@ -328,6 +463,16 @@ public class Game extends JFrame implements ActionListener{
         // Host's Screen
         else if(src == btHostBackToMenu) {
             setPanel(Panels.MainMenu, Panels.HostScreen);
+        }
+    }
+
+    private void loadGameBoard(int boardNumber) {
+        for (int col = 0; col < 5; col++) {
+            tfEditingBoardCategories[col].setText(gameBoard.getCategory(boardNumber, col));
+            System.out.println(gameBoard.getCategory(boardNumber, col));
+            for (int row = 0; row < 5; row++) {
+                btEditingBoardQuestions[col][row].setText(gameBoard.getPoints(boardNumber, col, row) + "");
+            }
         }
     }
 
@@ -355,7 +500,6 @@ public class Game extends JFrame implements ActionListener{
         
         setPanel(Panels.HostScreen, Panels.StartingScreen);
     }
-
     private void connectToServer(boolean localhosting) {
         String username = tfStartUsername.getText();
         String ipAddress = "localhost";
@@ -402,7 +546,6 @@ public class Game extends JFrame implements ActionListener{
 
         setPanel(Panels.ActualGame, Panels.StartingScreen);
     }
-    
     private void leaveGame() {
         if(server != null) {
             server.closeServerSocket();
@@ -415,6 +558,10 @@ public class Game extends JFrame implements ActionListener{
         setPanel(Panels.MainMenu, Panels.ActualGame);
     }
     
+    private void showErrorWindow(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
     private void setPanel(Panels panel, Panels prevPanel) {
         switch(prevPanel) {
             case MainMenu:
@@ -435,6 +582,12 @@ public class Game extends JFrame implements ActionListener{
             case CreateGame:
             remove(panelGameBoardEditor);
             break;
+            case EditGame:
+            remove(panelEditingBoard);
+            break;
+            case EditQuestion:
+            remove(panelEditingQuestion);
+            break;
         }
         switch(panel) {
             case MainMenu:
@@ -454,6 +607,12 @@ public class Game extends JFrame implements ActionListener{
             break;
             case CreateGame:
             add(panelGameBoardEditor);
+            break;
+            case EditGame:
+            add(panelEditingBoard);
+            break;
+            case EditQuestion:
+            add(panelEditingQuestion);
             break;
         }
         repaint();

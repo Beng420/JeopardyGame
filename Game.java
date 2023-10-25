@@ -300,6 +300,10 @@ public class Game extends JFrame implements ActionListener{
         btEditingQuestionBackToBoard.setMargin(new java.awt.Insets(0, 0, 0, 0));
         panelEditingQuestion.add(btEditingQuestionBackToBoard);
 
+        lbEditingQuestionQuestion = new JLabel("Question:");
+        lbEditingQuestionQuestion.setBounds(10, 100, STD_WIDTH, STD_HEIGHT);
+        panelEditingQuestion.add(lbEditingQuestionQuestion);
+
 
 
         // Actual Game
@@ -447,6 +451,10 @@ public class Game extends JFrame implements ActionListener{
             for(int i = 0; i < 5; i++) {
                 for(int j = 0; j < 5; j ++) {
                     if(src == btEditingBoardQuestions[i][j]) {
+                        tfEditingQuestionQuestion.setText(gameBoard.getQuestion(0, i, j));
+                        tfEditingQuestionAnswer.setText(gameBoard.getAnswer(0, i, j));
+                        tfEditingQuestionValue.setText(gameBoard.getPoints(0, i, j) + "");
+                        lbEditingQuestionQuestion.setText("Question: " + gameBoard.getCategory(0, i)+" - "+gameBoard.getPoints(0, i, j));
                         setPanel(Panels.EditQuestion, Panels.EditGame);
                     }
                 }

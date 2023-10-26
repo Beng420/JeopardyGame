@@ -17,9 +17,9 @@ public class GameBoard {
     }
     public void addboard(){
         boardCount++;
-        if(boardCount > 1)
+        if(boardCount > 1){
             categories.add(categories.get(categories.size()-1));
-        else
+        } else
             categories.add(new String[]{"Category 1", "Category 2", "Category 3", "Category 4", "Category 5"});
         questions.add(new String[][]{
             {"Question 1", "Question 2", "Question 3", "Question 4", "Question 5"}, 
@@ -41,6 +41,7 @@ public class GameBoard {
             {200, 300, 400, 500, 600}});
     }
     public void changeCategory(int boardNumber, int category, String newCategory){
+        System.out.println("Changing category "+category+" from "+categories.get(boardNumber)[category]+" to "+newCategory+" on board "+boardNumber+"...");
         categories.get(boardNumber)[category] = newCategory;
     }
     public void changeQuestion(int boardNumber, int category, int question, String newQuestion){
@@ -51,6 +52,9 @@ public class GameBoard {
     }
     public void changePoints(int boardNumber, int category, int question, int newPoints){
         points.get(boardNumber)[category][question] = newPoints;
+    }
+    public int getNumberOfBoards() {
+        return boardCount;
     }
     public String getCategory(int boardNumber, int category){
         return categories.get(boardNumber)[category];

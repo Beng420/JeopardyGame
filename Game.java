@@ -7,7 +7,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -29,11 +28,13 @@ public class Game extends JFrame implements ActionListener{
     private final int STD_WIDTH = 100;
     private final int STD_WIDTH_HALF = 50;
     private final int STD_WIDTH_DOUBLE = 200;
-    private final int STD_WIDTH_POINT_FIVE = 150;
+    private final int STD_WIDTH_ONE_POINT_FIVE = 150;
     private final int STD_HEIGHT = 50;
     private final int STD_HEIGHT_HALF = 25;
     private final int STD_HEIGHT_DOUBLE = 100;
     private final int STD_HEIGHT_POINT_FIVE = 75;
+    private final String DEFAULT_SAVE_LOCATION = "C:\\Users\\Public\\Documents\\JeopardyGame\\";
+    private final String DEFAULT_ADDRESS = "localhost";
 
     private JPanel panelMenu;
     private JButton btMenuStartGame;
@@ -79,6 +80,10 @@ public class Game extends JFrame implements ActionListener{
     private JButton btEditingBoardBackToMenu;
     private JButton btEditingBoardSaveGameBoard;
     private JButton[][] btEditingBoardQuestions;
+    private JButton btEditingBoardCycleBoardNumberDown;
+    private JButton btEditingBoardCycleBoardNumberUp;
+    private JButton btEditingBoardBoardNumber;
+    private JButton btEditingBoardAddBoard;
     private JTextField[] tfEditingBoardCategories;
 
     private JPanel panelEditingQuestion;
@@ -87,6 +92,9 @@ public class Game extends JFrame implements ActionListener{
     private JTextField tfEditingQuestionValue;
     private JButton btEditingQuestionBackToBoard;
     private JLabel lbEditingQuestionQuestion;
+    private int currentBoardNumber = 0;
+    private int currentCategory = 0;
+    private int currentQuestion = 0;
 
 
     public enum Panels {
@@ -120,16 +128,16 @@ public class Game extends JFrame implements ActionListener{
         gameOptions = FileHandler.loadGameOptions();
         if(gameOptions == null) {
             gameOptions = new HashMap<String, String>();
-            gameOptions.put("defaultAddress", "localhost");
-            gameOptions.put("saveLocation", "%UserProfile%");
+            gameOptions.put("defaultAddress", DEFAULT_ADDRESS);
+            gameOptions.put("saveLocation", DEFAULT_SAVE_LOCATION);
         } else {
-            if(gameOptions.get("defaultAddress").equals("")) {
-                gameOptions.put("defaultAddress", "localhost");
-                System.out.println("defaultAddress is null");
-            }
-            if(gameOptions.get("saveLocation").equals("")) {
-                gameOptions.put("saveLocation", "C:\\Users\\Public\\Documents\\JeopardyGame\\");
-                System.out.println("saveLocation is null");
+            if(!(gameOptions.get("defaultAddress") != null && !gameOptions.get("defaultAddress").equals(""))) {
+                gameOptions.put("defaultAddress", DEFAULT_ADDRESS);
+                System.out.println("defaultAddress is null, setting to default");
+        }
+        if(!(gameOptions.get("saveLocation") != null && !gameOptions.get("saveLocation").equals(""))) {
+            gameOptions.put("saveLocation", DEFAULT_SAVE_LOCATION);
+            System.out.println("saveLocation is null, setting to default");
             }
         }
         
@@ -259,21 +267,40 @@ public class Game extends JFrame implements ActionListener{
         btEditingBoardSaveGameBoard.addActionListener(this);
         btEditingBoardSaveGameBoard.setMargin(new java.awt.Insets(0, 0, 0, 0));
         panelEditingBoard.add(btEditingBoardSaveGameBoard);
-
         btEditingBoardQuestions = new JButton[5][5];
-        for(int i = 0; i < 5; i++) {
-            for(int j = 0; j < 5; j ++) {
-                btEditingBoardQuestions[i][j] = new JButton();
-                btEditingBoardQuestions[i][j].setBounds(100 + (i * STD_WIDTH_POINT_FIVE), 100 + (j * STD_HEIGHT), STD_WIDTH_POINT_FIVE, STD_HEIGHT);
-                btEditingBoardQuestions[i][j].addActionListener(this);
-                panelEditingBoard.add(btEditingBoardQuestions[i][j]);
+        for(int col = 0; col < 5; col++) {
+            for(int row = 0; row < 5; row ++) {
+                btEditingBoardQuestions[col][row] = new JButton();
+                btEditingBoardQuestions[col][row].setBounds(100 + (col * STD_WIDTH_ONE_POINT_FIVE), 100 + (row * STD_HEIGHT), STD_WIDTH_ONE_POINT_FIVE, STD_HEIGHT);
+                btEditingBoardQuestions[col][row].addActionListener(this);
+                panelEditingBoard.add(btEditingBoardQuestions[col][row]);
             }
         }
+        // i want directly below the question board on the left a square button with an arrow to the left, which cycles down the board number. following to the right is a button which you cant press, which just shows the board number. its also square and small. to the right of this is a button cycling up, with an arrow to the right
+        btEditingBoardCycleBoardNumberDown = new JButton("<");
+        btEditingBoardCycleBoardNumberDown.setBounds(100, 100 + (5 * STD_HEIGHT), STD_HEIGHT, STD_HEIGHT);
+        btEditingBoardCycleBoardNumberDown.addActionListener(this);
+        btEditingBoardCycleBoardNumberDown.setEnabled(false);
+        panelEditingBoard.add(btEditingBoardCycleBoardNumberDown);
+        btEditingBoardBoardNumber = new JButton(1+"");
+        btEditingBoardBoardNumber.setBounds(100 + STD_HEIGHT, 100 + (5 * STD_HEIGHT), STD_HEIGHT, STD_HEIGHT);
+        btEditingBoardBoardNumber.addActionListener(this);
+        btEditingBoardBoardNumber.setEnabled(false);
+        panelEditingBoard.add(btEditingBoardBoardNumber);
+        btEditingBoardCycleBoardNumberUp = new JButton(">");
+        btEditingBoardCycleBoardNumberUp.setBounds(100 + (2 * STD_HEIGHT), 100 + (5 * STD_HEIGHT), STD_HEIGHT, STD_HEIGHT);
+        btEditingBoardCycleBoardNumberUp.addActionListener(this);
+        btEditingBoardCycleBoardNumberUp.setEnabled(false);
+        panelEditingBoard.add(btEditingBoardCycleBoardNumberUp);
+        btEditingBoardAddBoard = new JButton("Add Board");
+        btEditingBoardAddBoard.setBounds(100, 100 + (6 * STD_HEIGHT), STD_WIDTH_ONE_POINT_FIVE, STD_HEIGHT);
+        btEditingBoardAddBoard.addActionListener(this);
+        panelEditingBoard.add(btEditingBoardAddBoard);
 
         tfEditingBoardCategories = new JTextField[5];
         for(int i = 0; i < 5; i++) {
             tfEditingBoardCategories[i] = new JTextField();
-            tfEditingBoardCategories[i].setBounds(100 + (i * STD_WIDTH_POINT_FIVE), 50, STD_WIDTH_POINT_FIVE, STD_HEIGHT);
+            tfEditingBoardCategories[i].setBounds(100 + (i * STD_WIDTH_ONE_POINT_FIVE), 50, STD_WIDTH_ONE_POINT_FIVE, STD_HEIGHT);
             panelEditingBoard.add(tfEditingBoardCategories[i]);
         }
 
@@ -300,8 +327,8 @@ public class Game extends JFrame implements ActionListener{
         btEditingQuestionBackToBoard.setMargin(new java.awt.Insets(0, 0, 0, 0));
         panelEditingQuestion.add(btEditingQuestionBackToBoard);
 
-        lbEditingQuestionQuestion = new JLabel("Question:");
-        lbEditingQuestionQuestion.setBounds(10, 100, STD_WIDTH, STD_HEIGHT);
+        lbEditingQuestionQuestion = new JLabel("Question: ");
+        lbEditingQuestionQuestion.setBounds(100, 50, STD_WIDTH*4, STD_HEIGHT);
         panelEditingQuestion.add(lbEditingQuestionQuestion);
 
 
@@ -429,6 +456,9 @@ public class Game extends JFrame implements ActionListener{
                     loadGameBoard(0);
                     setPanel(Panels.EditGame, Panels.CreateGame);
                 }
+                if(gameBoard.getNumberOfBoards()>1) {
+                    btEditingBoardCycleBoardNumberUp.setEnabled(true);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 showErrorWindow("Error loading game board");
@@ -439,6 +469,11 @@ public class Game extends JFrame implements ActionListener{
         else if(src == btEditingBoardBackToMenu) {
             setPanel(Panels.CreateGame, Panels.EditGame);
         } else if(src == btEditingBoardSaveGameBoard) {
+
+            for(int col = 0; col < 5; col++) {
+                gameBoard.changeCategory(currentBoardNumber, col, tfEditingBoardCategories[col].getText());
+            }
+
             try {
                 FileHandler.saveGameBoard(gameBoard.getBoardID(), gameOptions.get("saveLocation"), gameBoard.toString());
             } catch (Exception e) {
@@ -446,23 +481,59 @@ public class Game extends JFrame implements ActionListener{
                 showErrorWindow("Error saving game board");
             }
         } else if(src == btEditingQuestionBackToBoard) {
-            setPanel(Panels.EditGame, Panels.EditQuestion);
+            try {
+                gameBoard.changeQuestion(currentBoardNumber, currentCategory, currentQuestion, tfEditingQuestionQuestion.getText());
+                gameBoard.changeAnswer(currentBoardNumber, currentCategory, currentQuestion, tfEditingQuestionAnswer.getText());
+                gameBoard.changePoints(currentBoardNumber, currentCategory, currentQuestion, Integer.parseInt(tfEditingQuestionValue.getText()));
+                btEditingBoardQuestions[currentCategory][currentQuestion].setText(gameBoard.getPoints(currentBoardNumber, currentCategory, currentQuestion) + "");
+                setPanel(Panels.EditGame, Panels.EditQuestion);
+            } catch (Exception e) {
+                e.printStackTrace();
+                showErrorWindow("Error saving question");
+            }
         } else {
-            for(int i = 0; i < 5; i++) {
-                for(int j = 0; j < 5; j ++) {
-                    if(src == btEditingBoardQuestions[i][j]) {
-                        tfEditingQuestionQuestion.setText(gameBoard.getQuestion(0, i, j));
-                        tfEditingQuestionAnswer.setText(gameBoard.getAnswer(0, i, j));
-                        tfEditingQuestionValue.setText(gameBoard.getPoints(0, i, j) + "");
-                        lbEditingQuestionQuestion.setText("Question: " + gameBoard.getCategory(0, i)+" - "+gameBoard.getPoints(0, i, j));
+            for(int col = 0; col < 5; col++) {
+                for(int row = 0; row < 5; row ++) {
+                    if(src == btEditingBoardQuestions[col][row]) {
+                        currentCategory = col;
+                        currentQuestion = row;
+                        tfEditingQuestionQuestion.setText(gameBoard.getQuestion(0, col, row));
+                        tfEditingQuestionAnswer.setText(gameBoard.getAnswer(0, col, row));
+                        tfEditingQuestionValue.setText(gameBoard.getPoints(0, col, row) + "");
+                        lbEditingQuestionQuestion.setText("Question: " + gameBoard.getPoints(0, col, row)+" - "+gameBoard.getCategory(0, col));
                         setPanel(Panels.EditQuestion, Panels.EditGame);
                     }
                 }
             }
+        } if (src == btEditingBoardCycleBoardNumberDown) {
+            if(currentBoardNumber>0) {
+                currentBoardNumber--;
+                System.out.println(currentBoardNumber);
+                btEditingBoardBoardNumber.setText(""+(currentBoardNumber+1));
+                if(currentBoardNumber==0) {
+                    btEditingBoardCycleBoardNumberDown.setEnabled(false);
+                }
+                btEditingBoardCycleBoardNumberUp.setEnabled(true);
+                loadGameBoard(currentBoardNumber);
+            }
+        } else if (src == btEditingBoardCycleBoardNumberUp) {
+            if(currentBoardNumber<gameBoard.getNumberOfBoards()-1) {
+                currentBoardNumber++;
+                System.out.println(currentBoardNumber);
+                btEditingBoardBoardNumber.setText(""+(currentBoardNumber+1));
+                if(currentBoardNumber==gameBoard.getNumberOfBoards()-1) {
+                    btEditingBoardCycleBoardNumberUp.setEnabled(false);
+                }
+                btEditingBoardCycleBoardNumberDown.setEnabled(true);
+                loadGameBoard(currentBoardNumber);
+            }
+        } else if (src == btEditingBoardAddBoard) {
+            gameBoard.addboard();
+            btEditingBoardCycleBoardNumberUp.setEnabled(true);
         }
 
         // Actual Game
-        if(src == btGameLeave) {
+        else if(src == btGameLeave) {
             leaveGame();
         } else if(src == btGameSendMessage) {
             sendMessage();
@@ -477,7 +548,6 @@ public class Game extends JFrame implements ActionListener{
     private void loadGameBoard(int boardNumber) {
         for (int col = 0; col < 5; col++) {
             tfEditingBoardCategories[col].setText(gameBoard.getCategory(boardNumber, col));
-            System.out.println(gameBoard.getCategory(boardNumber, col));
             for (int row = 0; row < 5; row++) {
                 btEditingBoardQuestions[col][row].setText(gameBoard.getPoints(boardNumber, col, row) + "");
             }

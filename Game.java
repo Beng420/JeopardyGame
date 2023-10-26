@@ -469,17 +469,7 @@ public class Game extends JFrame implements ActionListener{
         else if(src == btEditingBoardBackToMenu) {
             setPanel(Panels.CreateGame, Panels.EditGame);
         } else if(src == btEditingBoardSaveGameBoard) {
-
-            for(int col = 0; col < 5; col++) {
-                gameBoard.changeCategory(currentBoardNumber, col, tfEditingBoardCategories[col].getText());
-            }
-
-            try {
-                FileHandler.saveGameBoard(gameBoard.getBoardID(), gameOptions.get("saveLocation"), gameBoard.toString());
-            } catch (Exception e) {
-                e.printStackTrace();
-                showErrorWindow("Error saving game board");
-            }
+            saveGameBoard();
         } else if(src == btEditingQuestionBackToBoard) {
             try {
                 gameBoard.changeQuestion(currentBoardNumber, currentCategory, currentQuestion, tfEditingQuestionQuestion.getText());
@@ -506,6 +496,7 @@ public class Game extends JFrame implements ActionListener{
                 }
             }
         } if (src == btEditingBoardCycleBoardNumberDown) {
+            saveGameBoard();
             if(currentBoardNumber>0) {
                 currentBoardNumber--;
                 System.out.println(currentBoardNumber);
@@ -517,6 +508,7 @@ public class Game extends JFrame implements ActionListener{
                 loadGameBoard(currentBoardNumber);
             }
         } else if (src == btEditingBoardCycleBoardNumberUp) {
+            saveGameBoard();
             if(currentBoardNumber<gameBoard.getNumberOfBoards()-1) {
                 currentBoardNumber++;
                 System.out.println(currentBoardNumber);
@@ -551,6 +543,19 @@ public class Game extends JFrame implements ActionListener{
             for (int row = 0; row < 5; row++) {
                 btEditingBoardQuestions[col][row].setText(gameBoard.getPoints(boardNumber, col, row) + "");
             }
+        }
+    }
+    private void saveGameBoard() {
+        for(int col = 0; col < 5; col++) {
+            gameBoard.changeCategory(currentBoardNumber, col, tfEditingBoardCategories[col].getText());
+        }
+
+        try {
+            System.out.println(gameBoard.toString());
+            FileHandler.saveGameBoard(gameBoard.getBoardID(), gameOptions.get("saveLocation"), gameBoard.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            showErrorWindow("Error saving game board");
         }
     }
 

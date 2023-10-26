@@ -18,7 +18,7 @@ public class GameBoard {
     public void addboard(){
         boardCount++;
         if(boardCount > 1){
-            categories.add(categories.get(categories.size()-1));
+            categories.add(categories.get(categories.size()-1).clone());
         } else
             categories.add(new String[]{"Category 1", "Category 2", "Category 3", "Category 4", "Category 5"});
         questions.add(new String[][]{

@@ -65,10 +65,11 @@ public class Game extends JFrame implements ActionListener{
     private JTextField tfGameMessageToSend;
     private JTextArea taGameChat;
     private JScrollBar sbGameChat;
-    private String FILLERSTRING = "Type a message...";
 
     private JPanel panelHost;
     private JButton btHostBackToMenu;
+    private JTextField[] tfHostCategories;
+    private JButton[][] btHostQuestions;
 
     private JPanel panelGameBoardEditor;
     private JButton btGameBoardEditorBackToMenu;
@@ -96,6 +97,11 @@ public class Game extends JFrame implements ActionListener{
     private int currentCategory = 0;
     private int currentQuestion = 0;
 
+    private JPanel panelQuestion;
+    private JTextArea taQuestionQuestion;
+    private JTextField[] tfQuestionAnswers;
+
+
 
     public enum Panels {
         MainMenu,
@@ -105,7 +111,8 @@ public class Game extends JFrame implements ActionListener{
         HostScreen,
         CreateGame,
         EditGame,
-        EditQuestion
+        EditQuestion,
+        QuestoinScreen
     }
     
     public Game() {
@@ -262,7 +269,6 @@ public class Game extends JFrame implements ActionListener{
                 panelEditingBoard.add(btEditingBoardQuestions[col][row]);
             }
         }
-        // i want directly below the question board on the left a square button with an arrow to the left, which cycles down the board number. following to the right is a button which you cant press, which just shows the board number. its also square and small. to the right of this is a button cycling up, with an arrow to the right
         btEditingBoardCycleBoardNumberDown = new JButton("<");
         btEditingBoardCycleBoardNumberDown.setBounds(100, 100 + (5 * STD_HEIGHT), STD_HEIGHT, STD_HEIGHT);
         btEditingBoardCycleBoardNumberDown.addActionListener(this);
@@ -358,6 +364,37 @@ public class Game extends JFrame implements ActionListener{
         btHostBackToMenu.addActionListener(this);
         btHostBackToMenu.setMargin(new java.awt.Insets(0, 0, 0, 0));
         panelHost.add(btHostBackToMenu);
+        btHostQuestions = new JButton[5][5];
+
+        tfHostCategories = new JTextField[5];
+        for(int col = 0; col < 5; col++) {
+            tfHostCategories[col] = new JTextField();
+            tfHostCategories[col].setBounds(100 + (col * STD_WIDTH_ONE_POINT_FIVE), 50, STD_WIDTH_ONE_POINT_FIVE, STD_HEIGHT);
+            panelHost.add(tfHostCategories[col]);
+            for(int row = 0; row < 5; row ++) {
+                btHostQuestions[col][row] = new JButton();
+                btHostQuestions[col][row].setBounds(100 + (col * STD_WIDTH_ONE_POINT_FIVE), 100 + (row * STD_HEIGHT), STD_WIDTH_ONE_POINT_FIVE, STD_HEIGHT);
+                btHostQuestions[col][row].addActionListener(this);
+                panelHost.add(btHostQuestions[col][row]);
+            }
+        }
+
+
+
+        // Questioning Screen
+        panelQuestion = new JPanel();
+        panelQuestion.setBounds(0, 0, WIDTH, HEIGHT);
+        panelQuestion.setLayout(null);
+
+        taQuestionQuestion = new JTextArea();
+        taQuestionQuestion.setBounds(100, 100, STD_WIDTH*3, STD_HEIGHT*3);
+        panelQuestion.add(taQuestionQuestion);
+        tfQuestionAnswers = new JTextField[4];
+        for(int i = 0; i < 4; i++) {
+            tfQuestionAnswers[i] = new JTextField();
+            tfQuestionAnswers[i].setBounds(100, 100 + (i * STD_HEIGHT), STD_WIDTH*3, STD_HEIGHT);
+            panelQuestion.add(tfQuestionAnswers[i]);
+        }
     }
 
     private void loadOptions() {
@@ -422,6 +459,13 @@ public class Game extends JFrame implements ActionListener{
         else if(src == btStartCreateGame) {
             setPanel(Panels.CreateGame, Panels.StartingScreen);
         } else if(src == btStartHostGame) {
+            chooseBoardToLoad();
+            for(int col = 0; col < 5; col++) {
+                tfHostCategories[col].setText(gameBoard.getCategory(0, col));
+                for(int row = 0; row < 5; row ++) {
+                    btHostQuestions[col][row].setText(gameBoard.getPoints(0, col, row) + "");
+                }
+            }
             openServer();
         } else if(src == btStartConnectServer) {
             connectToServer(false);
@@ -450,27 +494,13 @@ public class Game extends JFrame implements ActionListener{
                 showErrorWindow("Error creating game board");
             }
         } else if(src == btGameBoardEditorLoadGameBoard) {
-            try {
-                JFileChooser chooser = new JFileChooser(gameOptions.get("saveLocation"));
-                chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                int status = chooser.showOpenDialog(null);
-                if (status == JFileChooser.APPROVE_OPTION) {
-                    File file = chooser.getSelectedFile();
-                    if (file == null) {
-                        return;
-                    }
-                    String fileName = chooser.getSelectedFile().getName();
-                    fileName = fileName.substring(0, fileName.lastIndexOf('.'));
-                    gameBoard = GameBoard.fromString(FileHandler.loadGameBoard(fileName, gameOptions.get("saveLocation")));
-                    loadGameBoard(0);
-                    setPanel(Panels.EditGame, Panels.CreateGame);
-                }
+            boolean successful = chooseBoardToLoad();
+            if(successful){
+                loadGameBoard(0);
+                setPanel(Panels.EditGame, Panels.CreateGame);
                 if(gameBoard.getNumberOfBoards()>1) {
                     btEditingBoardCycleBoardNumberUp.setEnabled(true);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                showErrorWindow("Error loading game board");
             }
         }
         
@@ -543,7 +573,39 @@ public class Game extends JFrame implements ActionListener{
         // Host's Screen
         else if(src == btHostBackToMenu) {
             setPanel(Panels.MainMenu, Panels.HostScreen);
+        } else {
+            for(int col = 0; col < 5; col++) {
+                for(int row = 0; row < 5; row ++) {
+                    if(src == btHostQuestions[col][row]) {
+                        String message = "Question: " + gameBoard.getQuestion(0, col, row) + "\nAnswer: " + gameBoard.getAnswer(0, col, row);
+
+
+                    }
+                }
+            }
         }
+    }
+
+    private boolean chooseBoardToLoad() {
+        try {
+            JFileChooser chooser = new JFileChooser(gameOptions.get("saveLocation"));
+            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            int status = chooser.showOpenDialog(null);
+            if (status == JFileChooser.APPROVE_OPTION) {
+                File file = chooser.getSelectedFile();
+                if (file == null) {
+                    return false;
+                }
+                String fileName = chooser.getSelectedFile().getName();
+                fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+                gameBoard = GameBoard.fromString(FileHandler.loadGameBoard(fileName, gameOptions.get("saveLocation")));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            showErrorWindow("Error loading game board");
+            return false;
+        }
+        return true;
     }
 
     private void loadGameBoard(int boardNumber) {

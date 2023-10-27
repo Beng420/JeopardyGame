@@ -46,17 +46,17 @@ public class Game extends JFrame implements ActionListener{
     private JButton btOptionsSaveLocationBrowse;
     private JTextField tfOptionsDefaultAddress;
     private JTextField tfOptionsSaveLocation;
+    private JTextField tfOptionsUsername;
     private JLabel lbOptionsDefaultAddress;
     private JLabel lbOptionsSaveLocation;
+    private JLabel lbOptionsUsername;
 
     private JPanel panelStart;
     private JButton btStartHostGame;
     private JButton btStartConnectServer;
     private JButton btStartCreateGame;
     private JButton btStartBackToMenu;
-    private JTextField tfStartUsername;
     private JTextField tfStartIpAddress;
-    private JLabel lbStartUsername;
     private JLabel lbStartIpAddress;
 
     private JPanel panelGame;
@@ -125,21 +125,7 @@ public class Game extends JFrame implements ActionListener{
         panelMenu.setLayout(null);
         add(panelMenu);
 
-        gameOptions = FileHandler.loadGameOptions();
-        if(gameOptions == null) {
-            gameOptions = new HashMap<String, String>();
-            gameOptions.put("defaultAddress", DEFAULT_ADDRESS);
-            gameOptions.put("saveLocation", DEFAULT_SAVE_LOCATION);
-        } else {
-            if(!(gameOptions.get("defaultAddress") != null && !gameOptions.get("defaultAddress").equals(""))) {
-                gameOptions.put("defaultAddress", DEFAULT_ADDRESS);
-                System.out.println("defaultAddress is null, setting to default");
-        }
-        if(!(gameOptions.get("saveLocation") != null && !gameOptions.get("saveLocation").equals(""))) {
-            gameOptions.put("saveLocation", DEFAULT_SAVE_LOCATION);
-            System.out.println("saveLocation is null, setting to default");
-            }
-        }
+        loadOptions();
         
 
 
@@ -182,6 +168,9 @@ public class Game extends JFrame implements ActionListener{
         tfOptionsSaveLocation = new JTextField(gameOptions.get("saveLocation"));
         tfOptionsSaveLocation.setBounds(200, 150, STD_WIDTH*2, STD_HEIGHT);
         panelOptions.add(tfOptionsSaveLocation);
+        tfOptionsUsername = new JTextField(gameOptions.get("username"));
+        tfOptionsUsername.setBounds(200, 200, STD_WIDTH, STD_HEIGHT);
+        panelOptions.add(tfOptionsUsername);
         
         lbOptionsDefaultAddress = new JLabel("Default Address:");
         lbOptionsDefaultAddress.setBounds(100, 100, STD_WIDTH, STD_HEIGHT);
@@ -189,6 +178,9 @@ public class Game extends JFrame implements ActionListener{
         lbOptionsSaveLocation = new JLabel("Save Location:");
         lbOptionsSaveLocation.setBounds(100, 150, STD_WIDTH, STD_HEIGHT);
         panelOptions.add(lbOptionsSaveLocation);
+        lbOptionsUsername = new JLabel("Username:");
+        lbOptionsUsername.setBounds(100, 200, STD_WIDTH, STD_HEIGHT);
+        panelOptions.add(lbOptionsUsername);
 
 
 
@@ -215,16 +207,10 @@ public class Game extends JFrame implements ActionListener{
         btStartBackToMenu.addActionListener(this);
         panelStart.add(btStartBackToMenu);
         
-        tfStartUsername = new JTextField();
-        tfStartUsername.setBounds(200, 100, STD_WIDTH, STD_HEIGHT);
-        panelStart.add(tfStartUsername);
         tfStartIpAddress = new JTextField();
         tfStartIpAddress.setBounds(200, 150, STD_WIDTH, STD_HEIGHT);
         panelStart.add(tfStartIpAddress);
         
-        lbStartUsername = new JLabel("Username:");
-        lbStartUsername.setBounds(100, 100, STD_WIDTH, STD_HEIGHT);
-        panelStart.add(lbStartUsername);
         lbStartIpAddress = new JLabel("IP Address:");
         lbStartIpAddress.setBounds(100, 150, STD_WIDTH, STD_HEIGHT);
         panelStart.add(lbStartIpAddress);
@@ -374,6 +360,30 @@ public class Game extends JFrame implements ActionListener{
         panelHost.add(btHostBackToMenu);
     }
 
+    private void loadOptions() {
+        gameOptions = FileHandler.loadGameOptions();
+        if(gameOptions == null) {
+            gameOptions = new HashMap<String, String>();
+            gameOptions.put("defaultAddress", DEFAULT_ADDRESS);
+            gameOptions.put("saveLocation", DEFAULT_SAVE_LOCATION);
+            gameOptions.put("username", "unknown");
+        } else {
+            if(!(gameOptions.get("defaultAddress") != null && !gameOptions.get("defaultAddress").equals(""))) {
+                gameOptions.put("defaultAddress", DEFAULT_ADDRESS);
+                System.out.println("defaultAddress is null, setting to default");
+            }
+            if(!(gameOptions.get("saveLocation") != null && !gameOptions.get("saveLocation").equals(""))) {
+                gameOptions.put("saveLocation", DEFAULT_SAVE_LOCATION);
+                System.out.println("saveLocation is null, setting to default");
+            }
+            if(!(gameOptions.get("username") != null && !gameOptions.get("username").equals(""))) {
+                gameOptions.put("username", "unknown");
+                System.out.println("username is null, setting to default");
+            }
+        }
+
+    }
+
     @Override
     public void actionPerformed(ActionEvent evnt) {
         Object src = evnt.getSource();
@@ -417,7 +427,6 @@ public class Game extends JFrame implements ActionListener{
             connectToServer(false);
         } else if(src == btStartBackToMenu) {
             tfStartIpAddress.setText("");
-            tfStartUsername.setText("");
             setPanel(Panels.MainMenu, Panels.StartingScreen);
         } 
         
@@ -570,7 +579,7 @@ public class Game extends JFrame implements ActionListener{
     }
 
     private void openServer() {
-        String username = tfStartUsername.getText();
+        String username = gameOptions.get("username");
         if(username.equals("")) {
             return;
         }
@@ -584,12 +593,11 @@ public class Game extends JFrame implements ActionListener{
         setPanel(Panels.HostScreen, Panels.StartingScreen);
     }
     private void connectToServer(boolean localhosting) {
-        String username = tfStartUsername.getText();
+        String username = gameOptions.get("username");
         String ipAddress = "localhost";
         if(!localhosting) {
             ipAddress = tfStartIpAddress.getText();
             if(username.equals("") || ipAddress.equals("")) {
-                tfStartUsername.setText("");
                 tfStartIpAddress.setText("");
                 return;
             }

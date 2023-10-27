@@ -26,7 +26,9 @@ public class ClientHandler implements Runnable{
             this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.clientUsername = bufferedReader.readLine();
             clientHandlers.add(this);
-            broadcastMessage("<Server> " + clientUsername + " has joined the chat");
+            for (int i = 0; i < clientHandlers.size(); i++) {
+                informAll("player"+i+"###"+clientHandlers.get(i).clientUsername);
+            }
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
@@ -42,8 +44,7 @@ public class ClientHandler implements Runnable{
                     closeEverything(socket, bufferedReader, bufferedWriter);
                     break;
                 }
-                System.out.println("<"+clientUsername+">"+messageFromClient);
-                broadcastMessage("<"+clientUsername+">"+messageFromClient);
+                server.handleMessage(messageFromClient, this);
             } catch (IOException e) {
                 closeEverything(socket, bufferedReader, bufferedWriter);
                 break;
@@ -64,9 +65,24 @@ public class ClientHandler implements Runnable{
         }
     }
 
+    public static void informAll(String message) {
+        for (ClientHandler clientHandler : clientHandlers) {
+            clientHandler.sendMessageToClient(message);
+        }
+    }
+
+    public void sendMessageToClient(String message) {
+        try {
+            bufferedWriter.write(message);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        } catch (IOException e) {
+            closeEverything(socket, bufferedReader, bufferedWriter);
+        }
+    }
+
     private void removeClientHandler() {
         clientHandlers.remove(this);
-        broadcastMessage("<Server> " + clientUsername + " has left the chat");
     }
 
     private void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
@@ -80,4 +96,7 @@ public class ClientHandler implements Runnable{
         }
     }
     
+    public String getUsername() {
+        return clientUsername;
+    }
 }

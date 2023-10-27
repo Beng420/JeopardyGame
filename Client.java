@@ -10,10 +10,11 @@ public class Client {
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
     private String clientUsername;
-    private String latestMessage;
+    private Game game;
 
-    public Client(Socket socket, String username) {
+    public Client(Socket socket, String username, Game game) {
         try {
+            this.game = game;
             this.socket = socket;
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -46,7 +47,7 @@ public class Client {
                             closeEverything(socket, bufferedReader, bufferedWriter);
                             break;
                         }
-                        latestMessage = messageFromServer;
+                        handleMessage(messageFromServer);
                     } catch (IOException e) {
                         closeEverything(socket, bufferedReader, bufferedWriter);
                         break;
@@ -56,12 +57,17 @@ public class Client {
         }).start();
     }
 
-    public String getLatestMessage() {
-        return latestMessage;
-    }
-
-    public void clearLatestMessage() {
-        latestMessage = null;
+    protected void handleMessage(String messageFromServer) {
+        String[] message = messageFromServer.split("###");
+        if(message[0].contains("player")) {
+            game.setPlayer(Integer.parseInt(message[0].substring(6)), message[1]);
+        } else if (message[0].equals("boardContents")) {
+            String[] boardContents = new String[30];
+            for (int i = 0; i < 30; i++) {
+                boardContents[i] = message[i+1];
+            }
+            game.importBoard(boardContents);
+        }
     }
 
     public String getUsername() {

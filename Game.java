@@ -13,9 +13,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
+import java.util.Scanner;
+
+import org.json.*;
+
+
 
 public class Game extends JFrame implements ActionListener{
 
@@ -123,7 +131,32 @@ public class Game extends JFrame implements ActionListener{
         setLayout(null);
         setLocationRelativeTo(null);
 
+        System.out.println("Latest Version: " + getLatestVersion());
+
         initComponents();
+    }
+
+    public static String getLatestVersion() {
+        try {
+            URI uri = new URI("https://api.github.com/repos/Beng420/JeopardyGame/releases/latest");
+            URL url = uri.toURL();
+            InputStream is = url.openStream();
+            Scanner scanner = new Scanner(is);
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                System.out.println(line);
+                if (line.contains("\"tag_name\":")) {
+                    scanner.close();
+                    is.close();
+                    JSONObject json = new JSONObject(line);
+                    return json.getString("name").split("v")[1].substring(0, 5);
+                }
+            }
+            scanner.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private void initComponents() {
@@ -632,7 +665,7 @@ public class Game extends JFrame implements ActionListener{
 
     private void sendMessage() {
         String message = tfGameMessageToSend.getText();
-        if(message.equals("") || message.equals(FILLERSTRING)) {
+        if(message.equals("")) {
             return;
         }
         client.sendMessage(message);

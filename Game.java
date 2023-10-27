@@ -1,4 +1,6 @@
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -7,7 +9,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.SwingConstants;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,6 +51,9 @@ public class Game extends JFrame implements ActionListener{
     private final int STD_HEIGHT_POINT_FIVE = 75;
     private final String DEFAULT_SAVE_LOCATION = "C:\\Users\\Public\\Documents\\JeopardyGame\\";
     private final String DEFAULT_ADDRESS = "localhost";
+    private final String DEFAULT_USERNAME = "unknown";
+
+    private StyleContext.NamedStyle centerStyle;
 
     private JPanel panelMenu;
     private JButton btMenuStartGame;
@@ -106,8 +117,19 @@ public class Game extends JFrame implements ActionListener{
     private int currentQuestion = 0;
 
     private JPanel panelQuestion;
-    private JTextArea taQuestionQuestion;
-    private JTextField[] tfQuestionAnswers;
+    private JTextPane tpQuestionQuestionOrAnswer;
+    private JTextPane[] tpQuestionAnswers;
+    private JTextField[] tfQuestionPoints;
+
+    private JTextPane tpQuestionHostQuestion;
+    private JTextPane tpQuestionHostAnswer;
+    private JButton btQuestionHostGivePoints;
+    private JButton btQuestionHostRemovePoints;
+    private JButton btQuestionHostShowQuestion;
+    private JButton btQuestionHostLockAnswers;
+    private JButton btQuestionHostRevealAnswer;
+    private JButton btQuestionHostBackToBoard;
+    private JCheckBox[] cbQuestionHostWinners;
 
 
 
@@ -120,7 +142,7 @@ public class Game extends JFrame implements ActionListener{
         CreateGame,
         EditGame,
         EditQuestion,
-        QuestoinScreen
+        QuestionScreen
     }
     
     public Game() {
@@ -129,6 +151,7 @@ public class Game extends JFrame implements ActionListener{
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(null);
         setLocationRelativeTo(null);
+        setResizable(false);
 
         System.out.println("Latest Version: " + getLatestVersion());
 
@@ -164,6 +187,10 @@ public class Game extends JFrame implements ActionListener{
         panelMenu.setLayout(null);
 
         loadOptions();
+
+        
+        centerStyle = StyleContext.getDefaultStyleContext().new NamedStyle();
+        StyleConstants.setAlignment(centerStyle, StyleConstants.ALIGN_CENTER);
         
 
 
@@ -417,14 +444,25 @@ public class Game extends JFrame implements ActionListener{
         panelQuestion.setBounds(0, 0, WIDTH, HEIGHT);
         panelQuestion.setLayout(null);
 
-        taQuestionQuestion = new JTextArea();
-        taQuestionQuestion.setBounds(100, 100, STD_WIDTH*3, STD_HEIGHT*3);
-        panelQuestion.add(taQuestionQuestion);
-        tfQuestionAnswers = new JTextField[4];
+        tpQuestionQuestionOrAnswer = new JTextPane();
+        tpQuestionQuestionOrAnswer.setBounds(100, 100, STD_WIDTH*4, STD_HEIGHT*3);
+        tpQuestionQuestionOrAnswer.setFocusable(false);
+        tpQuestionQuestionOrAnswer.setEditable(false);
+        initTextPane(tpQuestionQuestionOrAnswer);
+        panelQuestion.add(tpQuestionQuestionOrAnswer);
+        tpQuestionAnswers = new JTextPane[4];
+        tfQuestionPoints = new JTextField[4];
         for(int i = 0; i < 4; i++) {
-            tfQuestionAnswers[i] = new JTextField();
-            tfQuestionAnswers[i].setBounds(100, 100 + (i * STD_HEIGHT), STD_WIDTH*3, STD_HEIGHT);
-            panelQuestion.add(tfQuestionAnswers[i]);
+            tpQuestionAnswers[i] = new JTextPane();
+            tpQuestionAnswers[i].setBounds(100 + (i * STD_WIDTH), 100+STD_HEIGHT*4 , STD_WIDTH, STD_HEIGHT*2);
+            tpQuestionAnswers[i].setFocusable(false);
+            tpQuestionAnswers[i].setEditable(false);
+            initTextPane(tpQuestionAnswers[i]);
+            panelQuestion.add(tpQuestionAnswers[i]);
+            tfQuestionPoints[i] = new JTextField();
+            tfQuestionPoints[i].setBounds(100 + (i * STD_WIDTH), 100+STD_HEIGHT*8 , STD_WIDTH, STD_HEIGHT_HALF);
+            tfQuestionPoints[i].setFocusable(false);
+            panelQuestion.add(tfQuestionPoints[i]);
         }
 
         add(panelMenu);
@@ -437,7 +475,7 @@ public class Game extends JFrame implements ActionListener{
             gameOptions = new HashMap<String, String>();
             gameOptions.put("defaultAddress", DEFAULT_ADDRESS);
             gameOptions.put("saveLocation", DEFAULT_SAVE_LOCATION);
-            gameOptions.put("username", "unknown");
+            gameOptions.put("username", DEFAULT_USERNAME);
         } else {
             if(!(gameOptions.get("defaultAddress") != null && !gameOptions.get("defaultAddress").equals(""))) {
                 gameOptions.put("defaultAddress", DEFAULT_ADDRESS);
@@ -503,6 +541,7 @@ public class Game extends JFrame implements ActionListener{
             openServer();
         } else if(src == btStartConnectServer) {
             connectToServer(false);
+            setPanel(Panels.ActualGame, Panels.StartingScreen);
         } else if(src == btStartBackToMenu) {
             tfStartIpAddress.setText("");
             setPanel(Panels.MainMenu, Panels.StartingScreen);
@@ -609,13 +648,14 @@ public class Game extends JFrame implements ActionListener{
             for(int col = 0; col < 5; col++) {
                 for(int row = 0; row < 5; row ++) {
                     if(src == btHostQuestions[col][row]) {
-                        String message = "Question: " + gameBoard.getQuestion(0, col, row) + "\nAnswer: " + gameBoard.getAnswer(0, col, row);
-
-
+                        openQuestionScreen(col, row, true);
                     }
                 }
             }
         }
+
+        // Questioning Screen
+        
     }
 
     private boolean chooseBoardToLoad() {
@@ -638,6 +678,73 @@ public class Game extends JFrame implements ActionListener{
             return false;
         }
         return true;
+    }
+
+    private void openQuestionScreen(int category, int question, boolean host) {
+        if(host) {
+            // add host buttons and stuff
+            tpQuestionHostQuestion = new JTextPane();
+            tpQuestionHostQuestion.setText(gameBoard.getQuestion(0, category, question));
+            tpQuestionHostQuestion.setBounds(600, 100, STD_WIDTH*3, STD_HEIGHT*3);
+            tpQuestionHostQuestion.setEditable(false);
+            tpQuestionHostQuestion.setFocusable(false);
+            initTextPane(tpQuestionHostQuestion);
+            panelQuestion.add(tpQuestionHostQuestion);
+            tpQuestionHostAnswer = new JTextPane();
+            tpQuestionHostAnswer.setText(gameBoard.getAnswer(0, category, question));
+            tpQuestionHostAnswer.setBounds(600, 100+STD_HEIGHT*3, STD_WIDTH*3, STD_HEIGHT*3);
+            tpQuestionHostAnswer.setEditable(false);
+            tpQuestionHostAnswer.setFocusable(false);
+            initTextPane(tpQuestionHostAnswer);
+            panelQuestion.add(tpQuestionHostAnswer);
+            btQuestionHostShowQuestion = new JButton("Show Question");
+            btQuestionHostShowQuestion.setBounds(600, 100+STD_HEIGHT*6, STD_WIDTH, STD_HEIGHT);
+            btQuestionHostShowQuestion.addActionListener(this);
+            btQuestionHostShowQuestion.setMargin(new java.awt.Insets(0, 0, 0, 0));
+            panelQuestion.add(btQuestionHostShowQuestion);
+            btQuestionHostLockAnswers = new JButton("Lock Answers");
+            btQuestionHostLockAnswers.setBounds(600+STD_WIDTH, 100+STD_HEIGHT*6, STD_WIDTH, STD_HEIGHT);
+            btQuestionHostLockAnswers.addActionListener(this);
+            btQuestionHostLockAnswers.setMargin(new java.awt.Insets(0, 0, 0, 0));
+            panelQuestion.add(btQuestionHostLockAnswers);
+            btQuestionHostRevealAnswer = new JButton("Reveal Answer");
+            btQuestionHostRevealAnswer.setBounds(600+STD_WIDTH_DOUBLE, 100+STD_HEIGHT*6, STD_WIDTH, STD_HEIGHT);
+            btQuestionHostRevealAnswer.addActionListener(this);
+            btQuestionHostRevealAnswer.setMargin(new java.awt.Insets(0, 0, 0, 0));
+            panelQuestion.add(btQuestionHostRevealAnswer);
+            cbQuestionHostWinners = new JCheckBox[4];
+            for (int i = 0; i < 4; i++) {
+                cbQuestionHostWinners[i] = new JCheckBox();
+                int w = (int)(STD_WIDTH_HALF/2);
+                cbQuestionHostWinners[i].setBounds(600+(i*w), 100+STD_HEIGHT*7, w, STD_HEIGHT);
+                cbQuestionHostWinners[i].setHorizontalAlignment(SwingConstants.CENTER);
+                panelQuestion.add(cbQuestionHostWinners[i]);
+            }
+            btQuestionHostGivePoints = new JButton("Award Points");
+            btQuestionHostGivePoints.setBounds(600+STD_WIDTH, 100+STD_HEIGHT*7, STD_WIDTH, STD_HEIGHT);
+            btQuestionHostGivePoints.addActionListener(this);
+            btQuestionHostGivePoints.setMargin(new java.awt.Insets(0, 0, 0, 0));
+            panelQuestion.add(btQuestionHostGivePoints);
+            btQuestionHostRemovePoints = new JButton("Remove Points");
+            btQuestionHostRemovePoints.setBounds(600+STD_WIDTH_DOUBLE, 100+STD_HEIGHT*7, STD_WIDTH, STD_HEIGHT);
+            btQuestionHostRemovePoints.addActionListener(this);
+            btQuestionHostRemovePoints.setMargin(new java.awt.Insets(0, 0, 0, 0));
+            panelQuestion.add(btQuestionHostRemovePoints);
+            btQuestionHostBackToBoard = new JButton("Back");
+            btQuestionHostBackToBoard.setBounds(600, 100+STD_HEIGHT*8, STD_WIDTH_HALF, STD_HEIGHT_HALF);
+            btQuestionHostBackToBoard.addActionListener(this);
+            btQuestionHostBackToBoard.setMargin(new java.awt.Insets(0, 0, 0, 0));
+            panelQuestion.add(btQuestionHostBackToBoard);
+            setPanel(Panels.QuestionScreen, Panels.HostScreen);
+        } else {
+            setPanel(Panels.QuestionScreen, Panels.ActualGame);
+        }
+    }
+
+    private void initTextPane(JTextPane textPane) {
+        textPane.setLogicalStyle(centerStyle);
+        textPane.setBorder(BorderFactory.createLineBorder(Color.black));
+        textPane.setFont(new Font("Arial", Font.PLAIN, 20));
     }
 
     private void loadGameBoard(int boardNumber) {
@@ -727,8 +834,6 @@ public class Game extends JFrame implements ActionListener{
                 }
             }
         }).start();
-
-        setPanel(Panels.ActualGame, Panels.StartingScreen);
     }
     private void leaveGame() {
         if(server != null) {
@@ -772,6 +877,9 @@ public class Game extends JFrame implements ActionListener{
             case EditQuestion:
             remove(panelEditingQuestion);
             break;
+            case QuestionScreen:
+            remove(panelQuestion);
+            break;
         }
         switch(panel) {
             case MainMenu:
@@ -797,6 +905,9 @@ public class Game extends JFrame implements ActionListener{
             break;
             case EditQuestion:
             add(panelEditingQuestion);
+            break;
+            case QuestionScreen:
+            add(panelQuestion);
             break;
         }
         repaint();

@@ -41,7 +41,6 @@ public class GameBoard {
             {200, 300, 400, 500, 600}});
     }
     public void changeCategory(int boardNumber, int category, String newCategory){
-        System.out.println("Changing category "+category+" from "+categories.get(boardNumber)[category]+" to "+newCategory+" on board "+boardNumber+"...");
         categories.get(boardNumber)[category] = newCategory;
     }
     public void changeQuestion(int boardNumber, int category, int question, String newQuestion){

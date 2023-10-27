@@ -127,13 +127,13 @@ public class Game extends JFrame implements ActionListener{
         super("Game");
         setSize(WIDTH, HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setVisible(true);
         setLayout(null);
         setLocationRelativeTo(null);
 
         System.out.println("Latest Version: " + getLatestVersion());
 
         initComponents();
+        setVisible(true);
     }
 
     public static String getLatestVersion() {
@@ -144,12 +144,11 @@ public class Game extends JFrame implements ActionListener{
             Scanner scanner = new Scanner(is);
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                System.out.println(line);
                 if (line.contains("\"tag_name\":")) {
                     scanner.close();
                     is.close();
                     JSONObject json = new JSONObject(line);
-                    return json.getString("name").split("v")[1].substring(0, 5);
+                    return json.getString("name").split("v.")[1].substring(0, 5);
                 }
             }
             scanner.close();
@@ -163,7 +162,6 @@ public class Game extends JFrame implements ActionListener{
         panelMenu = new JPanel();
         panelMenu.setBounds(0, 0, WIDTH, HEIGHT);
         panelMenu.setLayout(null);
-        add(panelMenu);
 
         loadOptions();
         
@@ -428,6 +426,9 @@ public class Game extends JFrame implements ActionListener{
             tfQuestionAnswers[i].setBounds(100, 100 + (i * STD_HEIGHT), STD_WIDTH*3, STD_HEIGHT);
             panelQuestion.add(tfQuestionAnswers[i]);
         }
+
+        add(panelMenu);
+        repaint();
     }
 
     private void loadOptions() {
@@ -571,7 +572,6 @@ public class Game extends JFrame implements ActionListener{
             saveGameBoard();
             if(currentBoardNumber>0) {
                 currentBoardNumber--;
-                System.out.println(currentBoardNumber);
                 btEditingBoardBoardNumber.setText(""+(currentBoardNumber+1));
                 if(currentBoardNumber==0) {
                     btEditingBoardCycleBoardNumberDown.setEnabled(false);
@@ -583,7 +583,6 @@ public class Game extends JFrame implements ActionListener{
             saveGameBoard();
             if(currentBoardNumber<gameBoard.getNumberOfBoards()-1) {
                 currentBoardNumber++;
-                System.out.println(currentBoardNumber);
                 btEditingBoardBoardNumber.setText(""+(currentBoardNumber+1));
                 if(currentBoardNumber==gameBoard.getNumberOfBoards()-1) {
                     btEditingBoardCycleBoardNumberUp.setEnabled(false);
@@ -655,7 +654,6 @@ public class Game extends JFrame implements ActionListener{
         }
 
         try {
-            System.out.println(gameBoard.toString());
             FileHandler.saveGameBoard(gameBoard.getBoardID(), gameOptions.get("saveLocation"), gameBoard.toString());
         } catch (Exception e) {
             e.printStackTrace();
